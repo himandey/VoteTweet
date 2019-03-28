@@ -4,7 +4,6 @@ from pprint import pprint
 
 # get the list of votes page
 voteReq = requests.get('http://www.legis.ga.gov/Legislation/en-US/VoteList.aspx?Chamber=2')
-req = requests.get('http://www.legis.ga.gov/Legislation/en-US/Display/20192020/HB/290')
 
 # parse
 soup = BeautifulSoup(voteReq.content, 'html.parser')
@@ -13,6 +12,7 @@ soup = BeautifulSoup(voteReq.content, 'html.parser')
 divs1 = soup.find_all('div', attrs={'style':'width:100%; background-color:#EEEFCE;'})
 divs2 = soup.find_all('div', attrs={'style':'width:100%; background-color:#FFFFFF;'})
 divs = divs1 + divs2
+print "Found all voting record divs"
 
 # filter for only the votes that passed or were adopted
 divs = [list(div.children) for div in divs if 'ADOPT' in str(div) or 'PASSAGE' in str(div)]
@@ -33,7 +33,7 @@ for div in divs:
 
 # get the final link to the page
 voteLinks = ['http://www.legis.ga.gov'+link[0]['href'] for link in links if '/Legislation/en-US/Vote' in str(link)]
-
+print "Scraped all bill votes links"
 # build bill data parse the actual vote page for relevant information
 bills = {}
 
@@ -55,19 +55,28 @@ for link in voteLinks:
 				if status.get_text().lower() != '' and status.get_text().lower() != []:
 					bills[aLink[0].get_text()].update({'status':status.get_text()})
 
+print "Found all bill links and statuses"
+
 # get each sublinks actual bill summary
 for bill,nye in bills.iteritems():
 	theScience = requests.get(nye.get('billLink'))
 	soup = BeautifulSoup(theScience.content, 'html.parser')
 
-	divs = soup.find_all('div', attrs={'class':'ggah1'})
+	summaryDiv = soup.find_all('div', attrs={'class':'ggah1'})[0].get_text()
 	links = soup.find_all('a')
 
-	senator = [palpalink.get_text() for palpalink in links if 'http://www.senate.ga.gov/senators' in str(palpalink)]
+	#scrape all sponsors and grab the summaryu (ggah1)
+	try:
+		senators = [palpalink.get_text() for palpalink in links if 'senate.ga.gov/senators' in str(palpalink)]
+		houseReps = [hugh.get_text() for hugh in links if 'house.ga.gov/representatives' in str(hugh)]
+	except Exception as e:
+		print "here's what exploded:", pprint(e)
 
-	bills[bill]['senatorSponsor'] = senator
-	pprint(bills)
+	bills[bill]['senateSponsors'] = senators
+	bills[bill]['houseSponsors'] = houseReps
+	bills[bill]['summary'] = summaryDiv 
+	#pprint(bills)
 
-
+print "Found all bill summaries and sponsors"
 
 pprint(bills)
