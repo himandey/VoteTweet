@@ -2,6 +2,9 @@ from bs4 import BeautifulSoup
 import requests
 from pprint import pprint
 
+# python requirements: pip install BeautifulSoup
+#					   pip install requests
+
 # get the list of votes page
 voteReq = requests.get('http://www.legis.ga.gov/Legislation/en-US/VoteList.aspx?Chamber=2')
 
