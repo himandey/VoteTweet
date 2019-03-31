@@ -1,9 +1,11 @@
 from bs4 import BeautifulSoup
 import requests
 from pprint import pprint
+from api_keys import twitter_client_key, twitter_client_secret, twitter_access_token, twitter_access_token_secret, bitly_user, bitly_api_key
 
 # python requirements: pip install BeautifulSoup
 #					   pip install requests
+#					   pip install bitly_api
 
 # get the list of votes page
 voteReq = requests.get('http://www.legis.ga.gov/Legislation/en-US/VoteList.aspx?Chamber=2')
@@ -22,6 +24,7 @@ divs = [list(div.children) for div in divs if 'ADOPT' in str(div) or 'PASSAGE' i
 
 # get latest divs date and filter
 latest_date = str(divs[-1][1].get_text());
+# print "Latest Date: ", pprint(latest_date)
 divs = [div for div in divs if latest_date in str(div)]
 
 # grab links for each
@@ -59,8 +62,8 @@ for link in voteLinks:
 	except:
 		continue
 
-	print "YAYNUMS",yayNums
-	print "NAYNUMS",nayNums
+	#print "YAYNUMS",yayNums
+	#print "NAYNUMS",nayNums
 	# get hrefs
 	# build data structure of bill, whether it passed, and the link to the bill summary
 	for linky in linkDivs:
@@ -103,3 +106,32 @@ for bill,nye in bills.iteritems():
 print "Found all bill summaries and sponsors"
 
 pprint(bills)
+
+
+
+# now that we have all of our bills and data, we'll tweet 'em out
+
+from requests_oauthlib import OAuth1
+import bitlyapi
+import sys
+
+auth = OAuth1(twitter_client_key, twitter_client_secret, twitter_access_token, twitter_access_token_secret)
+
+bit = bitlyapi.BitLy(bitly_user, bitly_api_key)
+
+for bill,burr in bills.iteritems():
+	# shorten summary to 140 chars
+	summarysummary = (burr['summary'][:180] + '..') if len(burr['summary']) > 180 else burr['summary']
+	text_link = bit.shorten(longUrl=burr['billLink']).get('url')
+	votes_link = bit.shorten(longUrl=burr['votesLink']).get('url')
+
+	yayNum = burr.get('yays')
+	nayNum = burr.get('nays')
+	status = '(Yea: '+str(yayNum)+ ' / Nay: ' +str(nayNum) 
+	passed = 'PASSED' if burr.get('passed') else 'REPEALED'
+	status += ' '+passed
+
+	tweet = bill+' ' +status+') : '+ summarysummary +'\n'+'Bill Text: '+text_link +'\n'+'Voting Record: '+votes_link
+	print "Tweety ",tweet
+
+	r = requests.post('https://api.twitter.com/1.1/statuses/update.json',auth = auth, data = {'status':tweet})
