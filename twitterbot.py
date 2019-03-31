@@ -76,7 +76,7 @@ for link in voteLinks:
 				passed = True
 			else:
 				passed = False
-			bills.update({billTitle:{'billLink':'http://www.legis.ga.gov' + aLink[0]['href'],'votesLink':link,'yays':yayNums,'nays':nayNums,'passed':passed}})
+			bills.update({billTitle:{'billLink':'http://www.legis.ga.gov' + aLink[0]['href'],'votesLink':link,'yays':yayNums,'nays':nayNums,'passed':passed,'date':latest_date}})
 			for status in statusDivs:
 				if status.get_text().lower() != '' and status.get_text().lower() != []:
 					bills[billTitle].update({'status':status.get_text()})
@@ -131,7 +131,7 @@ for bill,burr in bills.iteritems():
 	passed = 'PASSED' if burr.get('passed') else 'REPEALED'
 	status += ' '+passed
 
-	tweet = bill+' ' +status+') : '+ summarysummary +'\n'+'Bill Text: '+text_link +'\n'+'Voting Record: '+votes_link
+	tweet = bill+' '+ burr.get('date')+ ' ' +status+') : '+ summarysummary +'\n'+'Bill Text: '+text_link +'\n'+'Voting Record: '+votes_link
 	print "Tweety ",tweet
 
 	r = requests.post('https://api.twitter.com/1.1/statuses/update.json',auth = auth, data = {'status':tweet})
