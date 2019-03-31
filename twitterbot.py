@@ -20,6 +20,10 @@ print "Found all voting record divs"
 # filter for only the votes that passed or were adopted
 divs = [list(div.children) for div in divs if 'ADOPT' in str(div) or 'PASSAGE' in str(div)]
 
+# get latest divs date and filter
+latest_date = str(divs[-1][1].get_text());
+divs = [div for div in divs if latest_date in str(div)]
+
 # grab links for each
 links = []
 for div in divs:
@@ -46,17 +50,33 @@ for link in voteLinks:
 
 	linkDivs = soup.find_all('div', attrs={'class':'ggah1'})
 	statusDivs = soup.find_all('div', attrs={'class':'ggah2'})
-	
+
+	try:
+		yayDiv = soup.select('span.voteheader.voteY')[0]
+		nayDiv = soup.select('span.voteheader.voteN')[0]
+		yayNums = int(yayDiv.get_text().split(':')[1])
+		nayNums = int(nayDiv.get_text().split(':')[1])
+	except:
+		continue
+
+	print "YAYNUMS",yayNums
+	print "NAYNUMS",nayNums
 	# get hrefs
 	# build data structure of bill, whether it passed, and the link to the bill summary
 	for linky in linkDivs:
 		aLink = list(linky.findChildren("a" , recursive=False))
 		#pprint(aLink)
 		if aLink != []:
-			bills.update({aLink[0].get_text():{'billLink':'http://www.legis.ga.gov' + aLink[0]['href'],'votesLink':link}})
+			billTitle = aLink[0].get_text()
+			passed = None
+			if yayNums > nayNums:
+				passed = True
+			else:
+				passed = False
+			bills.update({billTitle:{'billLink':'http://www.legis.ga.gov' + aLink[0]['href'],'votesLink':link,'yays':yayNums,'nays':nayNums,'passed':passed}})
 			for status in statusDivs:
 				if status.get_text().lower() != '' and status.get_text().lower() != []:
-					bills[aLink[0].get_text()].update({'status':status.get_text()})
+					bills[billTitle].update({'status':status.get_text()})
 
 print "Found all bill links and statuses"
 
