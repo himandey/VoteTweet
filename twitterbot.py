@@ -132,6 +132,8 @@ for bill,burr in bills.iteritems():
 	status += ' '+passed
 
 	tweet = bill+' '+ burr.get('date')+ ' ' +status+') : '+ summarysummary +'\n'+'Bill Text: '+text_link +'\n'+'Voting Record: '+votes_link
-	print "Tweety ",tweet
+	print "Tweety: ",tweet
 
+	# SEND THEM TWEETS OUT BABY o7
 	r = requests.post('https://api.twitter.com/1.1/statuses/update.json',auth = auth, data = {'status':tweet})
+	#pprint(r.content)
