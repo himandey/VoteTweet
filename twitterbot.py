@@ -88,7 +88,8 @@ for bill,nye in bills.iteritems():
 	theScience = requests.get(nye.get('billLink'))
 	soup = BeautifulSoup(theScience.content, 'html.parser')
 
-	summaryDiv = soup.find_all('div', attrs={'class':'ggah1'})[0].get_text()
+	# get summary and remove any redundant bill names
+	summaryDiv = soup.find_all('div', attrs={'class':'ggah1'})[0].get_text().replace(str(bill),' ')
 	links = soup.find_all('a')
 
 	#scrape all sponsors and grab the summaryu (ggah1)
